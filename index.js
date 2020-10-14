@@ -67,16 +67,18 @@ function start() {
           addEmployee();
           break;
 
+        case "Remove Employee":
+          deleteEmployee();
+          break;
+
 
         case "Update Employee Role":
-          // songSearch();
-          //didn't have time to complete
+          updateEmployeeRole();
           break;
 
 
         case "Update Employee Manager":
-          // songSearch();
-          //didn't have time to complete
+          updateEmployeeManager();
           break;
 
         case "exit":
@@ -285,7 +287,7 @@ function addEmployee() {
           {
             name: "manager",
             type: "list",
-            message: "Whhich manager does the employee have?",
+            message: "Which manager does the employee have?",
             choices: managerNames,
           }
         ])
@@ -309,10 +311,223 @@ function addEmployee() {
               if (err) {
                 throw err;
               }
+              console.log("");
+              console.log("");
               return start();
             }
           );
         });
     });
   });
+};
+
+
+//this function controls runs a query to choose an employee, and then select a role, and that role overrides the previous role for the employee
+function updateEmployeeRole() {
+  return connection.query(`
+  select distinct 
+  employee.id as id
+  , CONCAT(employee.first_name," ",employee.last_name) as name
+  from employee;`, (err, results1) => {
+    if (err) {
+      throw err;
+    };
+
+    const employeeNames = results1.map((row) => row.name);
+
+    return inquirer
+      .prompt([
+        {
+          name: "employee",
+          type: "list",
+          message: "Which employee record do you wish to modify?",
+          choices: employeeNames,
+        }
+      ])
+      .then((answers) => {
+
+        const chosenEmployee = results1.find(
+          (row) => row.name === answers.employee
+        );
+
+        return connection.query(`
+          select distinct role.id as id, role.title from role;`, (err, results2) => {
+          if (err) {
+            throw err;
+          };
+
+          const roleTitles = results2.map((row) => row.title);
+
+          return inquirer
+            .prompt([
+              {
+                name: "role",
+                type: "list",
+                message: "Which role do you want to assign to the employee?",
+                choices: roleTitles,
+              }
+            ])
+            .then((answers) => {
+
+              const chosenRole = results2.find(
+                (row) => row.title === answers.role
+              );
+
+              return connection.query(
+                "Update employee SET employee.role_id = ? where employee.id = ?",
+                [chosenRole.id, chosenEmployee.id],
+                (err) => {
+                  if (err) {
+                    throw err;
+                  }
+                  console.log("");
+                  console.log("");
+                  return start();
+                }
+              );
+
+            });
+
+        });
+
+      });
+  })
+};
+
+//this function controls runs a query to choose an employee, and then select a new manager, and that manager choice overrides the previous manager for the employee
+function updateEmployeeManager() {
+  return connection.query(`
+  select distinct 
+  employee.id as id
+  , CONCAT(employee.first_name," ",employee.last_name) as name
+  from employee;`, (err, results1) => {
+    if (err) {
+      throw err;
+    };
+
+    const employeeNames = results1.map((row) => row.name);
+
+    return inquirer
+      .prompt([
+        {
+          name: "employee",
+          type: "list",
+          message: "Which employee record do you wish to modify?",
+          choices: employeeNames,
+        }
+      ])
+      .then((answers) => {
+
+        const chosenEmployee = results1.find(
+          (row) => row.name === answers.employee
+        );
+
+        return connection.query(`
+        select distinct 
+        employee.id
+        , CONCAT(employee.first_name," ",employee.last_name) as name
+        from employee
+        where id <> ?;`, chosenEmployee.id, (err, results2) => {
+          if (err) {
+            throw err;
+          };
+
+          const managerNames = results2.map((row) => row.name);
+
+          return inquirer
+            .prompt([
+              {
+                name: "manager",
+                type: "list",
+                message: "Which person do you want to assign as the employee's manager?",
+                choices: managerNames,
+              }
+            ])
+            .then((answers) => {
+
+              const chosenManager = results2.find(
+                (row) => row.name === answers.manager
+              );
+
+              return connection.query(
+                "Update employee SET employee.manager_id = ? where employee.id = ?",
+                [chosenManager.id, chosenEmployee.id],
+                (err) => {
+                  if (err) {
+                    throw err;
+                  }
+                  console.log("");
+                  console.log("");
+                  return start();
+                }
+              );
+
+            });
+
+        });
+
+      });
+  })
+};
+
+//this function controls runs a query to choose an employee, and then asks them to reconfirm, and then if yes deletes the employee record
+function deleteEmployee() {
+  return connection.query(`
+  select distinct 
+  employee.id as id
+  , CONCAT(employee.first_name," ",employee.last_name) as name
+  from employee;`, (err, results1) => {
+    if (err) {
+      throw err;
+    };
+
+    const employeeNames = results1.map((row) => row.name);
+
+    return inquirer
+      .prompt([
+        {
+          name: "employee",
+          type: "list",
+          message: "Which employee record do you wish to delete?",
+          choices: employeeNames,
+        },
+        {
+          name: "confirm",
+          type: "list",
+          message: "Are you really very sure?",
+          choices: ["yes, I am", "no, nevermind"],
+        },
+      ])
+      .then((answers) => {
+
+        const chosenEmployee = results1.find(
+          (row) => row.name === answers.employee
+        );
+
+        switch (answers.confirm) {
+          case "yes, I am":
+
+            return connection.query(
+              "Delete from employee where employee.id = ?", chosenEmployee.id, (err) => {
+                if (err) {
+                  throw err;
+                }
+                console.log("");
+                console.log("");
+                return start();
+              }
+            );
+
+          default:
+            console.log("");
+            console.log("");
+            return start();
+        }
+
+      });
+  })
 }
+
+
+
+

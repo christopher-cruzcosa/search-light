@@ -9,7 +9,7 @@ This application uses the Inquirer, mySQL, and Console.Table modules. The primar
 ## Usage 
 The user can view all employees, and drill down to see employees by department or manager.  The user also has the ability to add a new employee and then either modify their role, modify their manager, or delete the record entirely.
 
-A short video walkthrough is located here: https://youtu.be/WZ1PeYjlfcc
+A short video walkthrough is located here: https://youtu.be/8DWz7zqgV3Q
 
 The project exists on this GitHub repo but is not currently deployed.
           
