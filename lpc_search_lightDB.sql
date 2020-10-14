@@ -119,3 +119,13 @@ select distinct
   inner join employee as managers
   on managers.id = subordinates.manager_id
   where subordinates.manager_id <> "" ;
+  
+select distinct 
+  role.id
+  , role.title
+  from role;
+  
+  select distinct 
+    employee.id
+    , CONCAT(employee.first_name," ",employee.last_name) as name
+    from employee;

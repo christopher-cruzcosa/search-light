@@ -62,7 +62,7 @@ function start() {
           break;
 
         case "Add Employee":
-          // songSearch();
+          addEmployee();
           break;
 
 
@@ -196,6 +196,7 @@ function viewEmployeesByManager() {
           (row) => row.fullName === answer.choice
         );
 
+
         return connection.query(
           `Select 
           subordinates.id
@@ -229,3 +230,83 @@ function viewEmployeesByManager() {
       });
   });
 };
+
+function addEmployee() {
+  return connection.query(`
+  select distinct 
+  role.id
+  , role.title
+  from role;`, (err, results1) => {
+    if (err) {
+      throw err;
+    };
+
+    const roleNames = results1.map((row) => row.title);
+
+    return connection.query(`
+    select distinct 
+    employee.id
+    , CONCAT(employee.first_name," ",employee.last_name) as name
+    from employee;`, (err, results2) => {
+      if (err) {
+        throw err;
+      };
+
+      const managerNames = results2.map((row) => row.name);
+      console.log(managerNames);
+
+      return inquirer
+        .prompt([
+          {
+            name: "firstName",
+            type: "input",
+            message: "What is the first name of the employee?",
+          },
+          {
+            name: "lastName",
+            type: "input",
+            message: "What is the last name of the employee?",
+          },
+          {
+            name: "role",
+            type: "list",
+            message: "What job title does the employee have?",
+            choices: roleNames,
+          },
+          {
+            name: "manager",
+            type: "list",
+            message: "What job title does the employee have?",
+            choices: managerNames,
+          }
+        ])
+        .then((answers) => {
+          const chosenRole = results1.find(
+            (row) => row.title === answers.role
+          );
+          const chosenManager = results2.find(
+            (row) => row.name === answers.manager
+          );
+  
+  
+
+
+          return connection.query(
+            "INSERT INTO employee SET ?",
+            {
+              first_name: answers.firstName,
+              last_name: answers.lastName,
+              role_id: chosenRole.id,
+              manager_id: chosenManager.id
+            },
+            (err) => {
+              if (err) {
+                throw err;
+              }
+              return start();
+            }
+          );
+        });
+    });
+  });
+}
