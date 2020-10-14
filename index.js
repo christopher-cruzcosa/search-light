@@ -1,21 +1,22 @@
+//dependencies
+
 require("console.table");
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 
+//creating the main mySQL connection
 var connection = mysql.createConnection({
   host: "localhost",
 
-  // Your port; if not 3306
   port: 3306,
 
-  // Your username
   user: "root",
 
-  // Your password
   password: "passwordA1",
   database: "lpc_search_lightDB"
 });
 
+//making the connectio and starting the app
 connection.connect(function (err) {
   if (err) throw err;
   console.log(`
@@ -30,6 +31,7 @@ Remember, like our corporate motto says, 'We See You!'
   start();
 });
 
+//this first function controls the start menu of options
 function start() {
   inquirer
     .prompt({
@@ -68,11 +70,13 @@ function start() {
 
         case "Update Employee Role":
           // songSearch();
+          //didn't have time to complete
           break;
 
 
         case "Update Employee Manager":
           // songSearch();
+          //didn't have time to complete
           break;
 
         case "exit":
@@ -82,6 +86,7 @@ function start() {
     });
 };
 
+//this function controls runs a query to show all employees, along with their manager, role, and department
 function viewAllEmployees() {
   return connection.query(
     `Select subordinates.id
@@ -111,6 +116,8 @@ function viewAllEmployees() {
     });
 };
 
+//this function controls runs a query to show all deparmemts, makes the user choose one, and then uses that choice to make a query to
+// disaply all employees of that department
 function viewEmployeesByDepartment() {
   return connection.query("SELECT department.name, department.id FROM department", (err, results) => {
     if (err) {
@@ -148,7 +155,7 @@ function viewEmployeesByDepartment() {
           on subordinates.role_id = role.id
           left join employee as managers
           on subordinates.manager_id = managers.id
-          where department.id = ?
+          where department.id = ? and subordinates.first_name <> ""
           order by salary desc;`,
 
           chosenDepartment.id,
@@ -168,6 +175,8 @@ function viewEmployeesByDepartment() {
   });
 };
 
+//this function controls runs a query to show all managers, makes the user choose one, and then uses that choice to make a query to
+// disaply all employees of that manager
 function viewEmployeesByManager() {
   return connection.query(`select distinct 
   concat(managers.first_name,' ', managers.last_name) as fullName
@@ -179,7 +188,6 @@ function viewEmployeesByManager() {
     if (err) {
       throw err;
     };
-    console.log(results)
     const managerNames = results.map((row) => row.fullName);
 
     return inquirer
@@ -231,6 +239,8 @@ function viewEmployeesByManager() {
   });
 };
 
+//this function prompts the user to input some answers, like name, and then runs queries to show all roles and all employees, to allow the user to creat new employee record
+//with the input names, the chosen role, and the chosen employee as their manager
 function addEmployee() {
   return connection.query(`
   select distinct 
@@ -253,7 +263,6 @@ function addEmployee() {
       };
 
       const managerNames = results2.map((row) => row.name);
-      console.log(managerNames);
 
       return inquirer
         .prompt([
@@ -276,7 +285,7 @@ function addEmployee() {
           {
             name: "manager",
             type: "list",
-            message: "What job title does the employee have?",
+            message: "Whhich manager does the employee have?",
             choices: managerNames,
           }
         ])
@@ -287,9 +296,6 @@ function addEmployee() {
           const chosenManager = results2.find(
             (row) => row.name === answers.manager
           );
-  
-  
-
 
           return connection.query(
             "INSERT INTO employee SET ?",
